@@ -38,10 +38,17 @@
         .fee-display .label { font-size: 16px; color: #555; }
         .invoice-box { border: 2px dashed #3498db; border-radius: 10px; padding: 18px 22px; margin-top: 16px; background: #fbfdff; }
         .invoice-box h4 { text-align: center; color: #2c3e50; margin-bottom: 14px; font-size: 18px; }
-        .invoice-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .invoice-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; gap: 20px; }
+        .invoice-row span:last-child { text-align: right; }
         .invoice-row.total { border-bottom: none; color: #e74c3c; font-weight: bold; font-size: 18px; }
         .invoice-time { text-align: center; color: #777; font-size: 12px; margin-top: 18px; }
         .btn-group { margin-top: 15px; }
+        .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 1000; }
+        .modal-mask.show { display: flex; }
+        .modal-card { width: min(760px, 100%); max-height: 90vh; overflow-y: auto; background: white; border-radius: 14px; padding: 24px; box-shadow: 0 16px 50px rgba(0,0,0,0.28); }
+        .modal-card h3 { text-align: center; color: #2c3e50; margin-bottom: 12px; }
+        .modal-tip { text-align: center; color: #666; margin-bottom: 12px; }
+        .modal-actions { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
     </style>
 </head>
 <body>
@@ -65,11 +72,24 @@
     </div>
 </div>
 
+<div id="invoiceModal" class="modal-mask">
+    <div class="modal-card">
+        <h3>发票预览</h3>
+        <div class="modal-tip">请先核对发票内容，确认无误后点击“确定生成”。</div>
+        <div id="invoicePreview"></div>
+        <div class="modal-actions">
+            <button class="btn btn-warning" onclick="confirmInvoice()">确定生成</button>
+            <button class="btn btn-danger" onclick="closeInvoiceModal()">取消</button>
+        </div>
+    </div>
+</div>
+
 <script>
     let currentCardId = '';
     let currentRecordId = '';
     let currentFee = 0;
     let lastChargeInfo = null;
+    let pendingInvoiceHtml = '';
 
     function queryCharge() {
         const cardId = document.getElementById('cardId').value.trim();
@@ -100,6 +120,7 @@
         lastChargeInfo = info;
         currentRecordId = info.recordId;
         currentFee = info.fee || 0;
+        pendingInvoiceHtml = '';
 
         let warning = '';
         if (info.cardStatus === '挂失' || info.cardStatus === '注销') {
@@ -160,17 +181,28 @@
     function showInvoice() {
         const info = lastChargeInfo;
         if (!info) return;
-        if (!confirm('确定生成停车收费发票吗？')) return;
+        pendingInvoiceHtml = buildInvoiceHtml(info, formatDateTime(new Date()));
+        document.getElementById('invoicePreview').innerHTML = pendingInvoiceHtml;
+        document.getElementById('invoiceModal').className = 'modal-mask show';
+    }
 
-        const invoiceTime = formatDateTime(new Date());
-        const exitTime = invoiceTime;
-        document.getElementById('invoiceArea').innerHTML =
-            '<div class="invoice-box">' +
+    function confirmInvoice() {
+        if (!pendingInvoiceHtml) return;
+        document.getElementById('invoiceArea').innerHTML = pendingInvoiceHtml;
+        closeInvoiceModal();
+    }
+
+    function closeInvoiceModal() {
+        document.getElementById('invoiceModal').className = 'modal-mask';
+    }
+
+    function buildInvoiceHtml(info, invoiceTime) {
+        return '<div class="invoice-box">' +
             '<h4>停车收费发票</h4>' +
             '<div class="invoice-row"><span>卡号</span><span>' + escapeHtml(info.cardId) + '</span></div>' +
             '<div class="invoice-row"><span>车位编号</span><span>' + escapeHtml(info.spaceId) + '</span></div>' +
             '<div class="invoice-row"><span>入库时间</span><span>' + escapeHtml(info.entryTime) + '</span></div>' +
-            '<div class="invoice-row"><span>出库时间</span><span>' + escapeHtml(exitTime) + '</span></div>' +
+            '<div class="invoice-row"><span>出库时间</span><span>' + escapeHtml(invoiceTime) + '</span></div>' +
             '<div class="invoice-row"><span>停车时长</span><span>' + escapeHtml(info.durationDisplay) + '</span></div>' +
             '<div class="invoice-row"><span>收费金额</span><span>¥' + escapeHtml(info.feeDisplay) + '</span></div>' +
             '<div class="invoice-row total"><span>合计</span><span>¥' + escapeHtml(info.feeDisplay) + '</span></div>' +
@@ -185,6 +217,7 @@
     }
 
     function cancelOperation() {
+        closeInvoiceModal();
         hideChargeArea();
         document.getElementById('queryResult').innerHTML = '';
         document.getElementById('cardId').value = '';
