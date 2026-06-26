@@ -73,10 +73,6 @@
         .item { padding: 12px 0; border-bottom: 1px solid #eee; }
         .item strong { display: inline-block; width: 130px; color: #34495e; }
         .msg { padding: 14px 18px; border-radius: 8px; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .btn-group { margin-top: 24px; text-align: center; }
-        .btn { padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; margin: 4px; }
-        .btn-primary { background: #3498db; color: white; }
-        .btn-warning { background: #f39c12; color: white; }
         @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -103,29 +99,7 @@
             <div class="item"><strong>收费时间：</strong><%= chargeTimeText %></div>
             <div class="item"><strong>支付状态：</strong><%= payStatus %></div>
         </div>
-        <div class="btn-group">
-            <button class="btn btn-warning" onclick="showInvoice()">开发票</button>
-            <button class="btn btn-primary" onclick="location.href='<%= ctx %>/charge/chargeManage.jsp'">继续收费</button>
-        </div>
     <% } %>
 </div>
-<script>
-    function showInvoice() {
-        alert(
-            '停车收费发票\n' +
-            '收费编号：<%= chargeId == null ? "" : chargeId %>\n' +
-            '停车记录编号：<%= recordId %>\n' +
-            '卡号：<%= cardId %>\n' +
-            '车牌号：<%= plate == null ? "未知" : plate %>\n' +
-            '车主姓名：<%= ownerName == null ? "未知" : ownerName %>\n' +
-            '联系电话：<%= phone == null ? "未知" : phone %>\n' +
-            '车位编号：<%= spaceId %>\n' +
-            '停车时长：<%= durationDisplay %>\n' +
-            '收费金额：¥<%= feeDisplay %>\n' +
-            '收费时间：<%= chargeTimeText %>\n' +
-            '支付状态：<%= payStatus %>'
-        );
-    }
-</script>
 </body>
 </html>

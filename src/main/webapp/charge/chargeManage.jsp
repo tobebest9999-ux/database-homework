@@ -36,8 +36,11 @@
         .fee-display { background: #fff3cd; border: 2px solid #f39c12; border-radius: 10px; padding: 15px 20px; margin: 15px 0; text-align: center; }
         .fee-display .amount { font-size: 34px; font-weight: bold; color: #e67e22; }
         .fee-display .label { font-size: 16px; color: #555; }
-        .record-box { border: 1px solid #3498db; border-radius: 10px; padding: 18px; margin-top: 15px; background: #f8fbff; }
-        .record-box h4 { color: #2c3e50; margin-bottom: 10px; }
+        .invoice-box { border: 2px dashed #3498db; border-radius: 10px; padding: 18px 22px; margin-top: 16px; background: #fbfdff; }
+        .invoice-box h4 { text-align: center; color: #2c3e50; margin-bottom: 14px; font-size: 18px; }
+        .invoice-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .invoice-row.total { border-bottom: none; color: #e74c3c; font-weight: bold; font-size: 18px; }
+        .invoice-time { text-align: center; color: #777; font-size: 12px; margin-top: 18px; }
         .btn-group { margin-top: 15px; }
     </style>
 </head>
@@ -119,7 +122,8 @@
             '<div class="item"><strong>停车时长：</strong>' + escapeHtml(info.durationDisplay) + '</div>' +
             '<div class="item"><strong>停车分钟数：</strong>' + escapeHtml(info.minutes) + ' 分钟</div>' +
             '</div>' +
-            '<div class="fee-display"><div class="label">应收总金额</div><div class="amount">¥' + escapeHtml(info.feeDisplay) + '</div></div>';
+            '<div class="fee-display"><div class="label">应收总金额</div><div class="amount">¥' + escapeHtml(info.feeDisplay) + '</div></div>' +
+            '<div id="invoiceArea"></div>';
 
         document.getElementById('actionArea').innerHTML =
             '<div class="btn-group">' +
@@ -142,9 +146,6 @@
                 const resultDiv = document.getElementById('actionResult');
                 if (data.code === 200 && data.chargeRecord) {
                     resultDiv.innerHTML = '<div class="msg msg-success">出库成功，正在打开收费记录页面。</div>';
-                    if (confirm('是否打印发票？')) {
-                        showInvoice(data.chargeRecord);
-                    }
                     const chargeId = encodeURIComponent(data.chargeRecord.chargeId);
                     window.location.href = '<%= ctx %>/charge/chargeRecord.jsp?chargeId=' + chargeId;
                 } else {
@@ -156,22 +157,31 @@
             });
     }
 
-    function showInvoice(record) {
+    function showInvoice() {
         const info = lastChargeInfo;
         if (!info) return;
-        let text = '停车收费发票\n' +
-            '卡号：' + info.cardId + '\n' +
-            '车牌号：' + (info.plate || '未知') + '\n' +
-            '车主姓名：' + (info.ownerName || '未知') + '\n' +
-            '车位编号：' + info.spaceId + '\n' +
-            '入库时间：' + info.entryTime + '\n' +
-            '出库时间：' + info.currentTime + '\n' +
-            '停车时长：' + info.durationDisplay + '\n' +
-            '收费金额：¥' + info.feeDisplay;
-        if (record && record.chargeId) {
-            text += '\n收费编号：' + record.chargeId + '\n支付状态：' + record.payStatus;
-        }
-        alert(text);
+        if (!confirm('确定生成停车收费发票吗？')) return;
+
+        const invoiceTime = formatDateTime(new Date());
+        const exitTime = invoiceTime;
+        document.getElementById('invoiceArea').innerHTML =
+            '<div class="invoice-box">' +
+            '<h4>停车收费发票</h4>' +
+            '<div class="invoice-row"><span>卡号</span><span>' + escapeHtml(info.cardId) + '</span></div>' +
+            '<div class="invoice-row"><span>车位编号</span><span>' + escapeHtml(info.spaceId) + '</span></div>' +
+            '<div class="invoice-row"><span>入库时间</span><span>' + escapeHtml(info.entryTime) + '</span></div>' +
+            '<div class="invoice-row"><span>出库时间</span><span>' + escapeHtml(exitTime) + '</span></div>' +
+            '<div class="invoice-row"><span>停车时长</span><span>' + escapeHtml(info.durationDisplay) + '</span></div>' +
+            '<div class="invoice-row"><span>收费金额</span><span>¥' + escapeHtml(info.feeDisplay) + '</span></div>' +
+            '<div class="invoice-row total"><span>合计</span><span>¥' + escapeHtml(info.feeDisplay) + '</span></div>' +
+            '<div class="invoice-time">生成时间：' + escapeHtml(invoiceTime) + '</div>' +
+            '</div>';
+    }
+
+    function formatDateTime(date) {
+        const pad = n => String(n).padStart(2, '0');
+        return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' +
+            pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
     }
 
     function cancelOperation() {
