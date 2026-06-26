@@ -5,7 +5,6 @@ import com.parking.service.CardService;
 import com.alibaba.fastjson.JSON;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,7 +13,6 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 public class CardServlet extends HttpServlet {
 
@@ -64,19 +62,27 @@ public class CardServlet extends HttpServlet {
 
             } else if ("query".equals(action)) {
                 String 卡号 = req.getParameter("cardId");
-                if (卡号 == null || 卡号.trim().isEmpty()) {
-                    result.put("code", 400);
-                    result.put("msg", "请输入卡号");
+                String 车牌号 = req.getParameter("plate");
+                Card card = null;
+
+                if (卡号 != null && !卡号.trim().isEmpty()) {
+                    card = cardService.findByCardId(卡号.trim());
+                } else if (车牌号 != null && !车牌号.trim().isEmpty()) {
+                    card = cardService.findByPlate(车牌号.trim());
                 } else {
-                    Card card = cardService.findByCardId(卡号);
-                    if (card != null) {
-                        result.put("code", 200);
-                        result.put("data", card);
-                        result.put("msg", "查询成功");
-                    } else {
-                        result.put("code", 404);
-                        result.put("msg", "未找到该车卡");
-                    }
+                    result.put("code", 400);
+                    result.put("msg", "请输入卡号或车牌号");
+                    out.write(JSON.toJSONString(result));
+                    return;
+                }
+
+                if (card != null) {
+                    result.put("code", 200);
+                    result.put("data", card);
+                    result.put("msg", "查询成功");
+                } else {
+                    result.put("code", 404);
+                    result.put("msg", "未找到该车卡");
                 }
 
             } else if ("list".equals(action)) {
@@ -106,21 +112,18 @@ public class CardServlet extends HttpServlet {
                     }
                 }
 
+            } else if ("reportLoss".equals(action)) {
+                writeStatusResult(req, result, cardService.reportLoss(req.getParameter("cardId")));
+
+            } else if ("unreportLoss".equals(action)) {
+                writeStatusResult(req, result, cardService.unreportLoss(req.getParameter("cardId")));
+
+            } else if ("cancel".equals(action)) {
+                writeStatusResult(req, result, cardService.cancelCard(req.getParameter("cardId")));
+
             } else if ("delete".equals(action)) {
-                String 卡号 = req.getParameter("cardId");
-                if (卡号 == null || 卡号.trim().isEmpty()) {
-                    result.put("code", 400);
-                    result.put("msg", "请输入卡号");
-                } else {
-                    boolean success = cardService.deleteCard(卡号);
-                    if (success) {
-                        result.put("code", 200);
-                        result.put("msg", "车卡删除成功");
-                    } else {
-                        result.put("code", 500);
-                        result.put("msg", "删除失败");
-                    }
-                }
+                result.put("code", 400);
+                result.put("msg", "删除功能已取消，请使用注销操作");
 
             } else {
                 result.put("code", 400);
@@ -135,5 +138,19 @@ public class CardServlet extends HttpServlet {
         out.write(JSON.toJSONString(result));
         out.flush();
         out.close();
+    }
+
+    private void writeStatusResult(HttpServletRequest req, Map<String, Object> result, CardService.StatusResult statusResult) {
+        String 卡号 = req.getParameter("cardId");
+        if (卡号 == null || 卡号.trim().isEmpty()) {
+            result.put("code", 400);
+            result.put("msg", "请输入卡号");
+            return;
+        }
+        result.put("code", statusResult.success ? 200 : 400);
+        result.put("msg", statusResult.message);
+        if (statusResult.status != null) {
+            result.put("status", statusResult.status);
+        }
     }
 }

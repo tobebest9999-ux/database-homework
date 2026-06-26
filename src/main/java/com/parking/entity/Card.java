@@ -5,14 +5,20 @@ public class Card {
     private String 车牌号;
     private String 车主姓名;
     private String 联系电话;
+    private String 车卡状态;
 
     public Card() {}
 
     public Card(String 卡号, String 车牌号, String 车主姓名, String 联系电话) {
+        this(卡号, 车牌号, 车主姓名, 联系电话, "正常");
+    }
+
+    public Card(String 卡号, String 车牌号, String 车主姓名, String 联系电话, String 车卡状态) {
         this.卡号 = 卡号;
         this.车牌号 = 车牌号;
         this.车主姓名 = 车主姓名;
         this.联系电话 = 联系电话;
+        this.车卡状态 = (车卡状态 == null || 车卡状态.trim().isEmpty()) ? "正常" : 车卡状态;
     }
 
     public String get卡号() { return 卡号; }
@@ -26,4 +32,7 @@ public class Card {
 
     public String get联系电话() { return 联系电话; }
     public void set联系电话(String 联系电话) { this.联系电话 = 联系电话; }
+
+    public String get车卡状态() { return 车卡状态; }
+    public void set车卡状态(String 车卡状态) { this.车卡状态 = 车卡状态; }
 }

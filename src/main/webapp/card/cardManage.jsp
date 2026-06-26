@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%
     String ctx = request.getContextPath();
 %>
@@ -9,7 +9,7 @@
     <title>车卡信息管理</title>
     <style>
         body { font-family: "Microsoft YaHei", sans-serif; background: #f0f5f9; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .container { max-width: 1050px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #2c3e50; }
         .back { display: inline-block; margin-bottom: 15px; color: #3498db; text-decoration: none; font-weight: bold; }
         .nav-links { text-align: center; padding: 12px; background: #ecf0f1; border-radius: 10px; margin-bottom: 25px; }
@@ -20,8 +20,7 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: inline-block; width: 100px; font-weight: bold; }
         .form-group input { padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; width: 250px; font-size: 14px; }
-        .form-group input[readonly] { background: #e9ecef; }
-        .btn { padding: 10px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; transition: all 0.3s; margin: 5px 5px 5px 0; }
+        .btn { padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s; margin: 4px 4px 4px 0; }
         .btn-primary { background: #3498db; color: white; }
         .btn-primary:hover { background: #2980b9; }
         .btn-warning { background: #f39c12; color: white; }
@@ -30,6 +29,8 @@
         .btn-danger:hover { background: #c0392b; }
         .btn-success { background: #2ecc71; color: white; }
         .btn-success:hover { background: #27ae60; }
+        .btn-muted { background: #95a5a6; color: white; }
+        .btn-muted:hover { background: #7f8c8d; }
         .msg { padding: 12px 18px; border-radius: 8px; margin: 10px 0; }
         .msg-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .msg-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
@@ -41,11 +42,16 @@
         .card-info .item strong { display: inline-block; width: 100px; }
         .btn-group { margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 10px 14px; border: 1px solid #ddd; text-align: left; }
+        th, td { padding: 10px 12px; border: 1px solid #ddd; text-align: left; vertical-align: middle; }
         th { background: #3498db; color: white; }
         tr:nth-child(even) { background: #f8f9fa; }
         .all-cards-area { margin-top: 20px; border-top: 2px solid #ddd; padding-top: 20px; }
         .all-cards-area h3 { color: #2c3e50; }
+        .status { font-weight: bold; }
+        .status.normal { color: #27ae60; }
+        .status.lost { color: #f39c12; }
+        .status.cancelled { color: #c0392b; }
+        .operation-cell { min-width: 190px; }
     </style>
 </head>
 <body>
@@ -63,49 +69,51 @@
     <h1>车卡信息管理</h1>
 
     <div class="section">
-        <h3>🔎 查找要管理的车卡</h3>
+        <h3>查找要管理的车卡</h3>
         <div class="form-group">
             <label>卡号：</label>
-            <input type="text" id="queryCardId" placeholder="请输入卡号" style="width:250px;">
+            <input type="text" id="queryCardId" placeholder="请输入卡号">
             <button class="btn btn-primary" onclick="queryCard()">查询</button>
         </div>
         <div id="queryResult"></div>
     </div>
 
     <div id="cardDetail" class="detail-area">
-        <h3>📋 车卡信息</h3>
+        <h3>车卡信息</h3>
         <div class="card-info">
             <div class="item"><strong>卡号：</strong> <span id="dCardId"></span></div>
             <div class="item"><strong>车牌号：</strong> <span id="dPlate"></span></div>
             <div class="item"><strong>车主姓名：</strong> <span id="dName"></span></div>
             <div class="item"><strong>联系电话：</strong> <span id="dPhone"></span></div>
+            <div class="item"><strong>车卡状态：</strong> <span id="dStatus" class="status"></span></div>
         </div>
 
         <hr>
         <h4>更新信息</h4>
         <div class="form-group">
             <label>车牌号：</label>
-            <input type="text" id="editPlate" style="width:250px;">
+            <input type="text" id="editPlate">
         </div>
         <div class="form-group">
             <label>车主姓名：</label>
-            <input type="text" id="editName" style="width:250px;">
+            <input type="text" id="editName">
         </div>
         <div class="form-group">
             <label>联系电话：</label>
-            <input type="text" id="editPhone" style="width:250px;">
+            <input type="text" id="editPhone">
         </div>
 
         <div class="btn-group">
-            <button class="btn btn-warning" onclick="updateCard()">更新</button>
-            <button class="btn btn-danger" onclick="deleteCard()">删除</button>
+            <button class="btn btn-warning" onclick="updateCard()">更新信息</button>
+            <button class="btn btn-danger" onclick="operateCurrentCard('reportLoss')">挂失</button>
+            <button class="btn btn-success" onclick="operateCurrentCard('unreportLoss')">解挂</button>
+            <button class="btn btn-muted" onclick="operateCurrentCard('cancel')">注销</button>
         </div>
         <div id="actionResult"></div>
     </div>
 
-    <!-- ========== 显示所有车卡 ========== -->
     <div class="all-cards-area">
-        <h3>📋 全部车卡</h3>
+        <h3>全部车卡</h3>
         <button class="btn btn-success" onclick="loadAllCards()">显示全部车卡</button>
         <div id="allCardsResult" style="margin-top:15px;"></div>
     </div>
@@ -113,12 +121,12 @@
 
 <script>
     let currentCardId = '';
+    let currentStatus = '';
 
     function queryCard() {
         const cardId = document.getElementById('queryCardId').value.trim();
         if (!cardId) {
-            document.getElementById('queryResult').innerHTML =
-                '<div class="msg msg-error">❌ 请输入卡号</div>';
+            document.getElementById('queryResult').innerHTML = '<div class="msg msg-error">请输入卡号</div>';
             return;
         }
 
@@ -129,28 +137,30 @@
                 if (data.code === 200) {
                     const c = data.data;
                     currentCardId = c.卡号;
-                    resultDiv.innerHTML = '<div class="msg msg-success">✅ 已找到车卡： ' + c.卡号 + '</div>';
-
-                    document.getElementById('dCardId').textContent = c.卡号;
-                    document.getElementById('dPlate').textContent = c.车牌号;
-                    document.getElementById('dName').textContent = c.车主姓名;
-                    document.getElementById('dPhone').textContent = c.联系电话;
-
-                    document.getElementById('editPlate').value = c.车牌号;
-                    document.getElementById('editName').value = c.车主姓名;
-                    document.getElementById('editPhone').value = c.联系电话;
-
+                    renderDetail(c);
+                    resultDiv.innerHTML = '<div class="msg msg-success">已找到车卡： ' + c.卡号 + '</div>';
                     document.getElementById('cardDetail').className = 'detail-area show';
                     document.getElementById('actionResult').innerHTML = '';
                 } else {
-                    resultDiv.innerHTML = '<div class="msg msg-error">❌ ' + data.msg + '</div>';
+                    resultDiv.innerHTML = '<div class="msg msg-error">' + data.msg + '</div>';
                     document.getElementById('cardDetail').className = 'detail-area';
                 }
             })
             .catch(err => {
-                document.getElementById('queryResult').innerHTML =
-                    '<div class="msg msg-error">❌ 服务器错误： ' + err.message + '</div>';
+                document.getElementById('queryResult').innerHTML = '<div class="msg msg-error">服务器错误： ' + err.message + '</div>';
             });
+    }
+
+    function renderDetail(c) {
+        currentStatus = c.车卡状态 || '正常';
+        document.getElementById('dCardId').textContent = c.卡号 || '';
+        document.getElementById('dPlate').textContent = c.车牌号 || '';
+        document.getElementById('dName').textContent = c.车主姓名 || '';
+        document.getElementById('dPhone').textContent = c.联系电话 || '';
+        setStatusText(document.getElementById('dStatus'), currentStatus);
+        document.getElementById('editPlate').value = c.车牌号 || '';
+        document.getElementById('editName').value = c.车主姓名 || '';
+        document.getElementById('editPhone').value = c.联系电话 || '';
     }
 
     function updateCard() {
@@ -169,41 +179,65 @@
               '&phone=' + encodeURIComponent(phone))
             .then(res => res.json())
             .then(data => {
-                const div = document.getElementById('actionResult');
-                const cls = data.code === 200 ? 'msg-success' : 'msg-error';
-                div.innerHTML = '<div class="msg ' + cls + '">' + data.msg + '</div>';
+                showActionResult(data);
                 if (data.code === 200) {
                     document.getElementById('dPlate').textContent = plate;
                     document.getElementById('dName').textContent = name;
                     document.getElementById('dPhone').textContent = phone;
+                    loadAllCards(false);
                 }
             });
     }
 
-    function deleteCard() {
-        if (!confirm('⚠️ 确定要删除车卡： ' + currentCardId + '?\n此操作不可撤销！')) {
+    function operateCurrentCard(action) {
+        operateCard(currentCardId, action, true);
+    }
+
+    function operateCard(cardId, action, refreshDetail) {
+        if (!cardId) return;
+        const actionText = actionName(action);
+        if (action === 'cancel' && !confirm('确定要注销车卡 ' + cardId + ' 吗？注销后无法恢复。')) {
             return;
         }
 
-        fetch('<%= ctx %>/card?action=delete&cardId=' + encodeURIComponent(currentCardId))
+        fetch('<%= ctx %>/card?action=' + encodeURIComponent(action) + '&cardId=' + encodeURIComponent(cardId))
             .then(res => res.json())
             .then(data => {
-                const div = document.getElementById('actionResult');
-                const cls = data.code === 200 ? 'msg-success' : 'msg-error';
-                div.innerHTML = '<div class="msg ' + cls + '">' + data.msg + '</div>';
+                showActionResult(data);
                 if (data.code === 200) {
-                    document.getElementById('cardDetail').className = 'detail-area';
-                    document.getElementById('queryResult').innerHTML =
-                        '<div class="msg msg-success">✅ 车卡 ' + currentCardId + ' 已删除</div>';
-                    document.getElementById('queryCardId').value = '';
-                    currentCardId = '';
+                    if (refreshDetail && cardId === currentCardId) {
+                        refreshCurrentCard();
+                    }
+                    loadAllCards(false);
+                } else if (!refreshDetail) {
+                    alert(actionText + '失败：' + data.msg);
+                }
+            })
+            .catch(err => alert(actionText + '失败：' + err.message));
+    }
+
+    function refreshCurrentCard() {
+        fetch('<%= ctx %>/card?action=query&cardId=' + encodeURIComponent(currentCardId))
+            .then(res => res.json())
+            .then(data => {
+                if (data.code === 200) {
+                    renderDetail(data.data);
                 }
             });
     }
 
-    function loadAllCards() {
+    function showActionResult(data) {
+        const div = document.getElementById('actionResult');
+        const cls = data.code === 200 ? 'msg-success' : 'msg-error';
+        div.innerHTML = '<div class="msg ' + cls + '">' + data.msg + '</div>';
+    }
+
+    function loadAllCards(showLoading) {
+        if (showLoading !== false) showLoading = true;
         const div = document.getElementById('allCardsResult');
-        div.innerHTML = '<div class="msg msg-info">⏳ 正在加载...</div>';
+        if (showLoading) {
+            div.innerHTML = '<div class="msg msg-info">正在加载...</div>';
+        }
 
         fetch('<%= ctx %>/card?action=list')
             .then(res => res.json())
@@ -211,25 +245,68 @@
                 if (data.code === 200 && data.data) {
                     const cards = data.data;
                     if (cards.length === 0) {
-                        div.innerHTML = '<div class="msg msg-info">ℹ️ 暂无车卡</div>';
+                        div.innerHTML = '<div class="msg msg-info">暂无车卡</div>';
                         return;
                     }
                     let html = '<table>';
-                    html += '<thead><tr><th>卡号</th><th>车牌号</th><th>车主姓名</th><th>联系电话</th></tr></thead><tbody>';
+                    html += '<thead><tr><th>卡号</th><th>车牌号</th><th>车主姓名</th><th>联系电话</th><th>车卡状态</th><th>操作</th></tr></thead><tbody>';
                     for (var i = 0; i < cards.length; i++) {
                         var c = cards[i];
-                        html += '<tr><td><strong>' + c.卡号 + '</strong></td><td>' + c.车牌号 + '</td><td>' + c.车主姓名 + '</td><td>' + c.联系电话 + '</td></tr>';
+                        var status = c.车卡状态 || '正常';
+                        html += '<tr>' +
+                            '<td><strong>' + escapeHtml(c.卡号) + '</strong></td>' +
+                            '<td>' + escapeHtml(c.车牌号) + '</td>' +
+                            '<td>' + escapeHtml(c.车主姓名) + '</td>' +
+                            '<td>' + escapeHtml(c.联系电话) + '</td>' +
+                            '<td><span class="status ' + statusClass(status) + '">' + escapeHtml(status) + '</span></td>' +
+                            '<td class="operation-cell">' + operationButtons(c.卡号) + '</td>' +
+                        '</tr>';
                     }
                     html += '</tbody></table>';
                     html += '<div style="margin-top:10px; color:#888; font-size:13px;">总数： <strong>' + cards.length + '</strong> 张车卡</div>';
                     div.innerHTML = html;
                 } else {
-                    div.innerHTML = '<div class="msg msg-error">❌ 加载车卡失败： ' + data.msg + '</div>';
+                    div.innerHTML = '<div class="msg msg-error">加载车卡失败： ' + data.msg + '</div>';
                 }
             })
             .catch(err => {
-                div.innerHTML = '<div class="msg msg-error">❌ 服务器错误： ' + err.message + '</div>';
+                div.innerHTML = '<div class="msg msg-error">服务器错误： ' + err.message + '</div>';
             });
+    }
+
+    function operationButtons(cardId) {
+        const id = escapeAttr(cardId);
+        return '<button class="btn btn-danger" onclick="operateCard(\'' + id + '\', \'reportLoss\', false)">挂失</button>' +
+               '<button class="btn btn-success" onclick="operateCard(\'' + id + '\', \'unreportLoss\', false)">解挂</button>' +
+               '<button class="btn btn-muted" onclick="operateCard(\'' + id + '\', \'cancel\', false)">注销</button>';
+    }
+
+    function actionName(action) {
+        if (action === 'reportLoss') return '挂失';
+        if (action === 'unreportLoss') return '解挂';
+        if (action === 'cancel') return '注销';
+        return '操作';
+    }
+
+    function setStatusText(el, status) {
+        el.textContent = status;
+        el.className = 'status ' + statusClass(status);
+    }
+
+    function statusClass(status) {
+        if (status === '挂失') return 'lost';
+        if (status === '注销') return 'cancelled';
+        return 'normal';
+    }
+
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str == null ? '' : String(str);
+        return div.innerHTML;
+    }
+
+    function escapeAttr(str) {
+        return String(str == null ? '' : str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
 
     document.getElementById('queryCardId').addEventListener('keypress', function(e) {

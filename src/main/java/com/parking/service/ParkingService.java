@@ -21,6 +21,17 @@ public class ParkingService {
     private CardDAO cardDAO = new CardDAO();
 
     public String checkIn(String 卡号, String 车位编号, String 车牌号) {
+        Card card = cardDAO.findByCardId(卡号);
+        if (card == null) {
+            return "未找到该车卡。";
+        }
+        if ("挂失".equals(card.get车卡状态())) {
+            return "该车卡已挂失，不能办理入库。";
+        }
+        if ("注销".equals(card.get车卡状态())) {
+            return "该车卡已注销，不能继续使用。";
+        }
+
         ParkingRecord active = recordDAO.findActiveByCardId(卡号);
         if (active != null) {
             return "该车卡车辆已经在场，请先办理出库。";
@@ -54,8 +65,7 @@ public class ParkingService {
         }
 
         // 记录审计日志（入库）
-        Card card = cardDAO.findByCardId(卡号);
-        String ownerName = card != null ? card.get车主姓名() : "未知";
+        String ownerName = card.get车主姓名();
         LogUtil.log("ParkingRecord", "INSERT", ownerName,
                 "车辆入库：卡号=" + 卡号 + "，车主=" + ownerName + "，车位=" + 车位编号);
 
