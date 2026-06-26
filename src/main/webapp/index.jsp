@@ -15,7 +15,7 @@
         body { font-family: "Microsoft YaHei", sans-serif; background: #f0f5f9; padding: 20px; }
         .container { max-width: 1300px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 15px; }
-        .menu-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin: 30px 0; }
+        .menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 30px 0; }
         .menu-card { background: #ecf0f1; border-radius: 15px; padding: 25px; text-align: center; cursor: pointer; transition: all 0.3s; text-decoration: none; color: #2c3e50; display: block; }
         .menu-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(52,152,219,0.3); background: #3498db; color: white; }
         .menu-card .icon { font-size: 40px; display: block; margin-bottom: 10px; }
@@ -58,10 +58,6 @@
         <a href="<%= ctx %>/charge/chargeManage.jsp" class="menu-card">
             <span class="icon">💰</span>
             <span class="title">收费管理</span>
-        </a>
-        <a href="<%= ctx %>/advanced/databaseDemo.jsp" class="menu-card">
-            <span class="icon">DB</span>
-            <span class="title">数据库高级技术演示</span>
         </a>
     </div>
 
