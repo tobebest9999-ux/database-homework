@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="com.parking.dao.AuditLogDAO, java.util.*" %>
 <%
     AuditLogDAO auditLogDAO = new AuditLogDAO();
@@ -51,7 +51,12 @@
 
     private String attr(Object value) {
         if (value == null) return "";
-        return String.valueOf(value).replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;").toLowerCase();
+        return String.valueOf(value)
+                .replace("&", "&amp;")
+                .replace("\"", "&quot;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .toLowerCase();
     }
 %>
 <!DOCTYPE html>
@@ -64,7 +69,8 @@
         .container { max-width: 1250px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 15px; }
         .back { display: inline-block; margin-bottom: 20px; color: #3498db; text-decoration: none; font-weight: bold; font-size: 14px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        .table-wrap { width: 100%; overflow-x: auto; }
+        table { width: 100%; min-width: 1100px; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
         th, td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
         th { background: #2c3e50; color: white; }
         tr:nth-child(even) { background: #f8f9fa; }
@@ -75,7 +81,8 @@
         .log-type.INSERT { background: #2ecc71; }
         .log-type.UPDATE { background: #f39c12; }
         .log-type.DELETE { background: #e74c3c; }
-        .operator-badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; background: #3498db; color: white; }
+        .operator-cell { width: 120px; min-width: 120px; white-space: nowrap; }
+        .operator-badge { padding: 3px 9px; border-radius: 10px; font-size: 11px; background: #3498db; color: white; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; line-height: 1.4; min-width: 70px; }
         .operator-badge.system { background: #95a5a6; }
         .stats { text-align: right; color: #888; font-size: 13px; margin-bottom: 10px; }
         .filters { display: grid; grid-template-columns: 180px 1fr 190px 190px auto; gap: 10px; align-items: end; margin-bottom: 12px; }
@@ -100,6 +107,7 @@
             <div><button onclick="resetFilters()">重置</button></div>
         </div>
         <div class="stats" id="logStats">当前显示最近 <%= logs.size() %> 条记录</div>
+        <div class="table-wrap">
         <table>
             <thead><tr><th>#</th><th>表名</th><th>操作类型</th><th>业务类型</th><th>操作员</th><th>内容</th><th>时间</th></tr></thead>
             <tbody>
@@ -121,13 +129,14 @@
                     <td><%= displayAuditTable(row.get("表名")) %></td>
                     <td><span class="log-type <%= type %>"><%= displayAuditType(type) %></span></td>
                     <td><%= biz %></td>
-                    <td><span class="operator-badge <%= isSystem ? "system" : "" %>"><%= displayAuditOperator(operator) %></span></td>
+                    <td class="operator-cell"><span class="operator-badge <%= isSystem ? "system" : "" %>"><%= displayAuditOperator(operator) %></span></td>
                     <td><%= content %></td>
                     <td><%= time %></td>
                 </tr>
             <% }} %>
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 <script>

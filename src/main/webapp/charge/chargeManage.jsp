@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%
     String ctx = request.getContextPath();
 %>
@@ -67,7 +67,6 @@
     let currentRecordId = '';
     let currentFee = 0;
     let lastChargeInfo = null;
-    let lastChargeRecord = null;
 
     function queryCharge() {
         const cardId = document.getElementById('cardId').value.trim();
@@ -77,7 +76,6 @@
             return;
         }
         currentCardId = cardId;
-        lastChargeRecord = null;
 
         fetch('<%= ctx %>/charge?action=getChargeInfo&cardId=' + encodeURIComponent(cardId))
             .then(res => res.json())
@@ -136,52 +134,41 @@
     }
 
     function doCheckout() {
-        if (!confirm('确定办理出库吗？系统将生成收费记录。')) return;
+        if (!confirm('确定要办理出库吗？系统将自动计算费用并生成收费记录。')) return;
 
         fetch('<%= ctx %>/charge?action=checkout&recordId=' + encodeURIComponent(currentRecordId))
             .then(res => res.json())
             .then(data => {
                 const resultDiv = document.getElementById('actionResult');
-                if (data.code === 200) {
-                    lastChargeRecord = data.chargeRecord;
-                    resultDiv.innerHTML = '<div class="msg msg-success">出库成功，收费记录已生成。</div>' + renderChargeRecord(data.chargeRecord);
-                    showQuery('msg-success', '已完成出库，卡号： ' + currentCardId);
-                    document.getElementById('actionArea').querySelector('.btn-success').disabled = true;
+                if (data.code === 200 && data.chargeRecord) {
+                    resultDiv.innerHTML = '<div class="msg msg-success">出库成功，正在打开收费记录页面。</div>';
+                    if (confirm('是否打印发票？')) {
+                        showInvoice(data.chargeRecord);
+                    }
+                    const chargeId = encodeURIComponent(data.chargeRecord.chargeId);
+                    window.location.href = '<%= ctx %>/charge/chargeRecord.jsp?chargeId=' + chargeId;
                 } else {
-                    resultDiv.innerHTML = '<div class="msg msg-error">' + escapeHtml(data.msg) + '</div>';
+                    resultDiv.innerHTML = '<div class="msg msg-error">' + escapeHtml(data.msg || '出库失败') + '</div>';
                 }
+            })
+            .catch(err => {
+                document.getElementById('actionResult').innerHTML = '<div class="msg msg-error">服务器错误： ' + escapeHtml(err.message) + '</div>';
             });
     }
 
-    function renderChargeRecord(record) {
-        if (!record) return '';
-        return '<div class="record-box">' +
-            '<h4>收费记录</h4>' +
-            '<div class="info-grid">' +
-            '<div class="item"><strong>收费编号：</strong>' + escapeHtml(record.chargeId) + '</div>' +
-            '<div class="item"><strong>停车记录编号：</strong>' + escapeHtml(record.recordId) + '</div>' +
-            '<div class="item"><strong>卡号：</strong>' + escapeHtml(record.cardId) + '</div>' +
-            '<div class="item"><strong>车位编号：</strong>' + escapeHtml(record.spaceId) + '</div>' +
-            '<div class="item"><strong>停车时长：</strong>' + escapeHtml(record.durationDisplay) + '</div>' +
-            '<div class="item"><strong>收费金额：</strong>¥' + escapeHtml(record.feeDisplay) + '</div>' +
-            '<div class="item"><strong>收费时间：</strong>' + escapeHtml(record.chargeTime) + '</div>' +
-            '<div class="item"><strong>支付状态：</strong>' + escapeHtml(record.payStatus) + '</div>' +
-            '</div></div>';
-    }
-
-    function showInvoice() {
+    function showInvoice(record) {
         const info = lastChargeInfo;
         if (!info) return;
-        const record = lastChargeRecord;
         let text = '停车收费发票\n' +
             '卡号：' + info.cardId + '\n' +
             '车牌号：' + (info.plate || '未知') + '\n' +
             '车主姓名：' + (info.ownerName || '未知') + '\n' +
-            '联系电话：' + (info.phone || '未知') + '\n' +
             '车位编号：' + info.spaceId + '\n' +
+            '入库时间：' + info.entryTime + '\n' +
+            '出库时间：' + info.currentTime + '\n' +
             '停车时长：' + info.durationDisplay + '\n' +
             '收费金额：¥' + info.feeDisplay;
-        if (record) {
+        if (record && record.chargeId) {
             text += '\n收费编号：' + record.chargeId + '\n支付状态：' + record.payStatus;
         }
         alert(text);
