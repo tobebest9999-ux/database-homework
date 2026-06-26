@@ -1,4 +1,4 @@
--- Residential Parking Management System
+﻿-- 小区停车管理系统
 -- 01_schema_and_seed.sql
 -- PowerShell users can run: Get-Content -Encoding UTF8 sql\01_schema_and_seed.sql | mysql -uroot -p --default-character-set=utf8mb4
 
@@ -52,6 +52,24 @@ CREATE TABLE IF NOT EXISTS ParkingRecord (
   CONSTRAINT chk_record_fee CHECK (收费数额 IS NULL OR 收费数额 >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS ChargeRecord (
+  收费编号 VARCHAR(80) NOT NULL,
+  停车记录编号 VARCHAR(80) NOT NULL,
+  卡号 VARCHAR(30) NOT NULL,
+  车位编号 VARCHAR(30) NOT NULL,
+  停车时长 INT NOT NULL,
+  收费金额 DECIMAL(10,2) NOT NULL,
+  收费时间 DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  支付状态 VARCHAR(20) NOT NULL DEFAULT '已支付',
+  PRIMARY KEY (收费编号),
+  UNIQUE KEY uk_charge_record (停车记录编号),
+  CONSTRAINT fk_charge_record FOREIGN KEY (停车记录编号) REFERENCES ParkingRecord(记录编号)
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT chk_charge_minutes CHECK (停车时长 >= 0),
+  CONSTRAINT chk_charge_amount CHECK (收费金额 >= 0),
+  CONSTRAINT chk_charge_pay_status CHECK (支付状态 IN ('已支付', '未支付'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS AuditLog (
   审计编号 BIGINT NOT NULL AUTO_INCREMENT,
   表名 VARCHAR(50) NOT NULL,
@@ -71,13 +89,6 @@ CREATE TABLE IF NOT EXISTS BackupHistory (
   PRIMARY KEY (备份编号)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-DROP TRIGGER IF EXISTS trg_card_encrypt_bi;
-DROP TRIGGER IF EXISTS trg_card_encrypt_bu;
-DROP VIEW IF EXISTS v_card_masked;
-DROP TABLE IF EXISTS ParkingRecordArchive;
-
-SET @sql := IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Card' AND COLUMN_NAME = '车牌号密文') > 0, 'ALTER TABLE Card DROP COLUMN 车牌号密文', 'SELECT 1');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql := IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Card' AND COLUMN_NAME = '车卡状态') = 0, 'ALTER TABLE Card ADD COLUMN 车卡状态 VARCHAR(20) NOT NULL DEFAULT ''正常'' AFTER 联系电话', 'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

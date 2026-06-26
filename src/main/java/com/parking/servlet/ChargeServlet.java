@@ -43,27 +43,17 @@ public class ChargeServlet extends HttpServlet {
                     result.put("msg", "请输入卡号");
                 } else {
                     ChargeService.ChargeInfo info = chargeService.getChargeInfo(卡号);
-                    if (info != null) {
-                        result.put("code", 200);
-                        Map<String, Object> data = new HashMap<>();
-                        data.put("recordId", info.recordId);
-                        data.put("cardId", info.cardId);
-                        data.put("spaceId", info.spaceId);
-                        data.put("plate", info.plate);
-                        data.put("ownerName", info.ownerName);
-                        data.put("phone", info.phone);
-                        data.put("cardStatus", info.cardStatus);
-                        data.put("entryTime", info.entryTime.toString());
-                        data.put("currentTime", info.currentTime.toString());
-                        data.put("minutes", info.minutes);
-                        data.put("durationDisplay", info.getDurationDisplay());
-                        data.put("fee", info.fee);
-                        data.put("feeDisplay", info.getFeeDisplay());
-                        result.put("data", data);
-                        result.put("msg", "查询成功");
-                    } else {
+                    if (!info.exists) {
                         result.put("code", 404);
-                        result.put("msg", "该车卡车辆当前不在场，或没有有效停车记录");
+                        result.put("msg", info.message);
+                    } else if (!info.active) {
+                        result.put("code", 404);
+                        result.put("msg", info.message);
+                        result.put("cardStatus", info.cardStatus);
+                    } else {
+                        result.put("code", 200);
+                        result.put("data", chargeInfoMap(info));
+                        result.put("msg", "查询成功");
                     }
                 }
 
@@ -73,13 +63,11 @@ public class ChargeServlet extends HttpServlet {
                     result.put("code", 400);
                     result.put("msg", "请输入停车记录编号");
                 } else {
-                    boolean success = chargeService.checkout(记录编号);
-                    if (success) {
-                        result.put("code", 200);
-                        result.put("msg", "出库成功");
-                    } else {
-                        result.put("code", 500);
-                        result.put("msg", "出库失败");
+                    ChargeService.ChargeResult checkout = chargeService.checkout(记录编号);
+                    result.put("code", checkout.success ? 200 : 500);
+                    result.put("msg", checkout.message);
+                    if (checkout.chargeRecord != null) {
+                        result.put("chargeRecord", chargeRecordMap(checkout.chargeRecord));
                     }
                 }
 
@@ -108,5 +96,38 @@ public class ChargeServlet extends HttpServlet {
         out.write(JSON.toJSONString(result));
         out.flush();
         out.close();
+    }
+
+    private Map<String, Object> chargeInfoMap(ChargeService.ChargeInfo info) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("recordId", info.recordId);
+        data.put("cardId", info.cardId);
+        data.put("spaceId", info.spaceId);
+        data.put("plate", info.plate);
+        data.put("ownerName", info.ownerName);
+        data.put("phone", info.phone);
+        data.put("cardStatus", info.cardStatus);
+        data.put("entryTime", info.entryTime.toString());
+        data.put("currentTime", info.currentTime.toString());
+        data.put("minutes", info.minutes);
+        data.put("durationDisplay", info.getDurationDisplay());
+        data.put("fee", info.fee);
+        data.put("feeDisplay", info.getFeeDisplay());
+        return data;
+    }
+
+    private Map<String, Object> chargeRecordMap(ChargeService.ChargeRecordInfo info) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("chargeId", info.chargeId);
+        data.put("recordId", info.recordId);
+        data.put("cardId", info.cardId);
+        data.put("spaceId", info.spaceId);
+        data.put("minutes", info.minutes);
+        data.put("durationDisplay", info.getDurationDisplay());
+        data.put("fee", info.fee);
+        data.put("feeDisplay", info.getFeeDisplay());
+        data.put("chargeTime", info.chargeTime.toString());
+        data.put("payStatus", info.payStatus);
+        return data;
     }
 }
