@@ -102,14 +102,7 @@ public class CardServlet extends HttpServlet {
                     result.put("msg", "请输入卡号");
                 } else {
                     Card card = new Card(卡号, 车牌号, 车主姓名, 联系电话);
-                    boolean success = cardService.updateCard(card);
-                    if (success) {
-                        result.put("code", 200);
-                        result.put("msg", "车卡信息修改成功");
-                    } else {
-                        result.put("code", 500);
-                        result.put("msg", "修改失败");
-                    }
+                    writeStatusResult(result, cardService.updateCardInfo(card));
                 }
 
             } else if ("reportLoss".equals(action)) {
@@ -147,6 +140,10 @@ public class CardServlet extends HttpServlet {
             result.put("msg", "请输入卡号");
             return;
         }
+        writeStatusResult(result, statusResult);
+    }
+
+    private void writeStatusResult(Map<String, Object> result, CardService.StatusResult statusResult) {
         result.put("code", statusResult.success ? 200 : 400);
         result.put("msg", statusResult.message);
         if (statusResult.status != null) {

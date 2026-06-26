@@ -5,7 +5,6 @@ import com.parking.service.ChargeService;
 import com.alibaba.fastjson.JSON;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,7 +13,6 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 public class ChargeServlet extends HttpServlet {
 
@@ -51,6 +49,10 @@ public class ChargeServlet extends HttpServlet {
                         data.put("recordId", info.recordId);
                         data.put("cardId", info.cardId);
                         data.put("spaceId", info.spaceId);
+                        data.put("plate", info.plate);
+                        data.put("ownerName", info.ownerName);
+                        data.put("phone", info.phone);
+                        data.put("cardStatus", info.cardStatus);
                         data.put("entryTime", info.entryTime.toString());
                         data.put("currentTime", info.currentTime.toString());
                         data.put("minutes", info.minutes);

@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%
     String ctx = request.getContextPath();
 %>
@@ -31,7 +31,6 @@
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .info-grid .item { padding: 6px 0; border-bottom: 1px solid #eee; }
         .info-grid .item strong { display: inline-block; width: 100px; }
-        .hint { font-size: 13px; color: #888; margin-top: 5px; }
         .fixed-only { background: #fff3cd; padding: 10px 15px; border-radius: 6px; border: 1px solid #ffc107; margin-bottom: 15px; }
     </style>
 </head>
@@ -42,21 +41,21 @@
     <hr>
 
     <div class="fixed-only">
-        提示：本页用于维护 A 编号车位的关联卡号。只有空闲车位可以修改。
+        提示：本页用于维护 A 编号车位的关联卡号。只有空闲车位可以修改，新关联卡号必须存在且状态正常。
     </div>
 
     <div class="section">
-        <h3>🔎 查询车位</h3>
+        <h3>查询车位</h3>
         <div class="form-group">
             <label>车位编号：</label>
-            <input type="text" id="spaceId" placeholder="例如：A-00" style="width:250px;">
+            <input type="text" id="spaceId" placeholder="例如：A-00">
             <button class="btn btn-primary" onclick="querySpace()">查询</button>
         </div>
         <div id="queryResult"></div>
     </div>
 
     <div id="detailArea" class="result-area">
-        <h3>📋 车位信息</h3>
+        <h3>车位信息</h3>
         <div class="info-grid">
             <div class="item"><strong>车位编号：</strong> <span id="dSpaceId"></span></div>
             <div class="item"><strong>类型：</strong> <span id="dType"></span></div>
@@ -69,7 +68,7 @@
             <h4>更新关联卡号</h4>
             <div class="form-group">
                 <label>新关联卡号：</label>
-                <input type="text" id="newCardId" placeholder="请输入要关联的卡号" style="width:250px;">
+                <input type="text" id="newCardId" placeholder="请输入要关联的卡号">
             </div>
             <button class="btn btn-warning" onclick="updateSpace()">保存修改</button>
             <div id="updateResult"></div>
@@ -83,14 +82,12 @@
     function querySpace() {
         const spaceId = document.getElementById('spaceId').value.trim().toUpperCase();
         if (!spaceId) {
-            document.getElementById('queryResult').innerHTML =
-                '<div class="msg msg-error">❌ 请输入车位编号</div>';
+            document.getElementById('queryResult').innerHTML = '<div class="msg msg-error">请输入车位编号</div>';
             return;
         }
 
         if (!spaceId.startsWith('A-')) {
-            document.getElementById('queryResult').innerHTML =
-                '<div class="msg msg-error">❌ 本页只管理 A 编号车位</div>';
+            document.getElementById('queryResult').innerHTML = '<div class="msg msg-error">本页只管理 A 编号车位</div>';
             document.getElementById('detailArea').className = 'result-area';
             return;
         }
@@ -102,41 +99,37 @@
                 if (data.code === 200) {
                     const s = data.data;
                     currentSpaceId = s.车位编号;
-                    resultDiv.innerHTML = '<div class="msg msg-success">✅ 已找到车位： ' + s.车位编号 + '</div>';
+                    resultDiv.innerHTML = '<div class="msg msg-success">已找到车位： ' + s.车位编号 + '</div>';
 
                     document.getElementById('dSpaceId').textContent = s.车位编号;
-                    document.getElementById('dType').textContent = '停车位';
+                    document.getElementById('dType').textContent = 'A 编号固定车位';
                     document.getElementById('dStatus').textContent = s.车位状态;
                     document.getElementById('dPlate').textContent = s.当前停放车牌 || '无';
                     document.getElementById('dCard').textContent = s.固定车位卡号 || '无';
 
-                    if (s.车位状态 === '空闲') {
-                        document.getElementById('editArea').style.display = 'block';
-                        document.getElementById('updateResult').innerHTML = '';
-                        document.getElementById('newCardId').value = s.固定车位卡号 || '';
-                    } else {
-                        document.getElementById('editArea').style.display = 'block';
-                        document.getElementById('updateResult').innerHTML =
-                            '<div class="msg msg-error">❌ 该车位已占用，占用期间不能修改。</div>';
+                    document.getElementById('editArea').style.display = 'block';
+                    document.getElementById('updateResult').innerHTML = '';
+                    document.getElementById('newCardId').value = s.固定车位卡号 || '';
+                    document.getElementById('newCardId').disabled = s.车位状态 !== '空闲';
+                    if (s.车位状态 !== '空闲') {
+                        document.getElementById('updateResult').innerHTML = '<div class="msg msg-error">该车位已占用，占用期间不能修改。</div>';
                     }
 
                     document.getElementById('detailArea').className = 'result-area show';
                 } else {
-                    resultDiv.innerHTML = '<div class="msg msg-error">❌ ' + data.msg + '</div>';
+                    resultDiv.innerHTML = '<div class="msg msg-error">' + data.msg + '</div>';
                     document.getElementById('detailArea').className = 'result-area';
                 }
             })
             .catch(err => {
-                document.getElementById('queryResult').innerHTML =
-                    '<div class="msg msg-error">❌ 服务器错误： ' + err.message + '</div>';
+                document.getElementById('queryResult').innerHTML = '<div class="msg msg-error">服务器错误： ' + err.message + '</div>';
             });
     }
 
     function updateSpace() {
         const newCardId = document.getElementById('newCardId').value.trim();
         if (!newCardId) {
-            document.getElementById('updateResult').innerHTML =
-                '<div class="msg msg-error">❌ 请输入卡号</div>';
+            document.getElementById('updateResult').innerHTML = '<div class="msg msg-error">请输入卡号</div>';
             return;
         }
 
@@ -146,10 +139,10 @@
             .then(data => {
                 const div = document.getElementById('updateResult');
                 if (data.code === 200) {
-                    div.innerHTML = '<div class="msg msg-success">✅ ' + data.msg + '</div>';
+                    div.innerHTML = '<div class="msg msg-success">' + data.msg + '</div>';
                     document.getElementById('dCard').textContent = newCardId;
                 } else {
-                    div.innerHTML = '<div class="msg msg-error">❌ ' + data.msg + '</div>';
+                    div.innerHTML = '<div class="msg msg-error">' + data.msg + '</div>';
                 }
             });
     }

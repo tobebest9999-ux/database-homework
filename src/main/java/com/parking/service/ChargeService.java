@@ -5,6 +5,7 @@ import com.parking.dao.CardDAO;
 import com.parking.dao.ParkingSpaceDAO;
 import com.parking.entity.Card;
 import com.parking.entity.ParkingRecord;
+import com.parking.entity.ParkingSpace;
 import com.parking.util.FeeCalculator;
 import com.parking.util.LogUtil;
 
@@ -66,13 +67,19 @@ public class ChargeService {
         LocalDateTime entryTime = record.get入库时间().toLocalDateTime();
         LocalDateTime now = LocalDateTime.now();
         long minutes = Duration.between(entryTime, now).toMinutes();
-
         double fee = calculateFee((int) minutes);
+
+        Card card = cardDAO.findByCardId(record.get卡号());
+        ParkingSpace space = spaceDAO.findBySpaceId(record.get停放车位编号());
 
         ChargeInfo info = new ChargeInfo();
         info.recordId = record.get记录编号();
         info.cardId = record.get卡号();
         info.spaceId = record.get停放车位编号();
+        info.plate = space == null ? "" : space.get当前停放车牌();
+        info.ownerName = card == null ? "" : card.get车主姓名();
+        info.phone = card == null ? "" : card.get联系电话();
+        info.cardStatus = card == null ? "" : card.get车卡状态();
         info.entryTime = entryTime;
         info.currentTime = now;
         info.minutes = (int) minutes;
@@ -85,6 +92,10 @@ public class ChargeService {
         public String recordId;
         public String cardId;
         public String spaceId;
+        public String plate;
+        public String ownerName;
+        public String phone;
+        public String cardStatus;
         public LocalDateTime entryTime;
         public LocalDateTime currentTime;
         public int minutes;

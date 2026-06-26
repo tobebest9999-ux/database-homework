@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%
     String ctx = request.getContextPath();
 %>
@@ -20,6 +20,7 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: inline-block; width: 100px; font-weight: bold; }
         .form-group input { padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; width: 250px; font-size: 14px; }
+        .form-group input[readonly], .form-group input:disabled { background: #eef2f5; color: #666; }
         .btn { padding: 9px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s; margin: 4px 4px 4px 0; }
         .btn-primary { background: #3498db; color: white; }
         .btn-primary:hover { background: #2980b9; }
@@ -104,7 +105,7 @@
         </div>
 
         <div class="btn-group">
-            <button class="btn btn-warning" onclick="updateCard()">更新信息</button>
+            <button id="updateInfoBtn" class="btn btn-warning" onclick="updateCard()">更新信息</button>
             <button class="btn btn-danger" onclick="operateCurrentCard('reportLoss')">挂失</button>
             <button class="btn btn-success" onclick="operateCurrentCard('unreportLoss')">解挂</button>
             <button class="btn btn-muted" onclick="operateCurrentCard('cancel')">注销</button>
@@ -161,8 +162,33 @@
         document.getElementById('editPlate').value = c.车牌号 || '';
         document.getElementById('editName').value = c.车主姓名 || '';
         document.getElementById('editPhone').value = c.联系电话 || '';
+        applyEditState();
     }
 
+    function applyEditState() {
+        const plateInput = document.getElementById('editPlate');
+        const nameInput = document.getElementById('editName');
+        const phoneInput = document.getElementById('editPhone');
+        const updateBtn = document.getElementById('updateInfoBtn');
+
+        if (currentStatus === '注销') {
+            plateInput.readOnly = true;
+            nameInput.readOnly = true;
+            phoneInput.readOnly = true;
+            updateBtn.disabled = true;
+            return;
+        }
+
+        updateBtn.disabled = false;
+        phoneInput.readOnly = false;
+        if (currentStatus === '挂失') {
+            plateInput.readOnly = true;
+            nameInput.readOnly = true;
+        } else {
+            plateInput.readOnly = false;
+            nameInput.readOnly = false;
+        }
+    }
     function updateCard() {
         const plate = document.getElementById('editPlate').value.trim();
         const name = document.getElementById('editName').value.trim();
@@ -184,6 +210,7 @@
                     document.getElementById('dPlate').textContent = plate;
                     document.getElementById('dName').textContent = name;
                     document.getElementById('dPhone').textContent = phone;
+                    refreshCurrentCard();
                     loadAllCards(false);
                 }
             });
